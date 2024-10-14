@@ -5,6 +5,7 @@ import { Neo4jGraphQL } from '@neo4j/graphql';
 import { toGraphQLTypeDefs } from "@neo4j/introspector";
 import neo4j from 'neo4j-driver';
 import dotenv from 'dotenv';
+import basicAuth from 'express-basic-auth';
 
 // Load environment variables (for local development)
 dotenv.config();
@@ -15,7 +16,8 @@ const NEO4J_USERNAME = process.env.NEO4J_USERNAME;
 const NEO4J_PASSWORD = process.env.NEO4J_PASSWORD;
 const PORT = process.env.PORT || 8080; // Google Cloud Run dynamically assigns the port
 const READ_ONLY = process.env.READ_ONLY || true; // We don't want to expose mutations in this case
-
+const BASIC_AUTH_USERNAME = process.env.BASIC_AUTH_USERNAME;
+const BASIC_AUTH_PASSWORD = process.env.BASIC_AUTH_PASSWORD;
 
 const driver = neo4j.driver(
   NEO4J_URI,
@@ -33,6 +35,14 @@ const main = async () => {
   const typeDefs = await toGraphQLTypeDefs(sessionFactory);
   const neoSchema = new Neo4jGraphQL({ typeDefs, driver });
   const app = express();
+
+  // Require basic auth if variables are present
+  if (BASIC_AUTH_USERNAME && BASIC_AUTH_PASSWORD) {
+    app.use(basicAuth({
+      users: { [BASIC_AUTH_USERNAME]: BASIC_AUTH_PASSWORD },
+      challenge: true,
+    }));
+  }
 
   // Create Apollo Server instance
   const server = new ApolloServer({
