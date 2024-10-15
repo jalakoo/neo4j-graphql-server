@@ -18,6 +18,7 @@ const PORT = process.env.PORT || 8080; // Google Cloud Run dynamically assigns t
 const READ_ONLY = process.env.READ_ONLY || true; // We don't want to expose mutations in this case
 const BASIC_AUTH_USERNAME = process.env.BASIC_AUTH_USERNAME;
 const BASIC_AUTH_PASSWORD = process.env.BASIC_AUTH_PASSWORD;
+const HTTPS_REDIRECT = process.env.HTTPS_REDIRECT || false;
 
 const driver = neo4j.driver(
   NEO4J_URI,
@@ -42,6 +43,16 @@ const main = async () => {
       users: { [BASIC_AUTH_USERNAME]: BASIC_AUTH_PASSWORD },
       challenge: true,
     }));
+  }
+
+  // Ensure the connection is via https
+  if (HTTPS_REDIRECT === true) {
+    app.use((req, res, next) => {
+      if (req.headers['x-forwarded-proto'] !== 'https') {
+        return res.redirect(`https://${req.headers.host}${req.url}`);
+    }
+    next();
+  });
   }
 
   // Create Apollo Server instance
