@@ -6,6 +6,7 @@ import { toGraphQLTypeDefs } from "@neo4j/introspector";
 import neo4j from 'neo4j-driver';
 import dotenv from 'dotenv';
 import basicAuth from 'express-basic-auth';
+import cors from "cors";
 
 // Load environment variables (for local development)
 dotenv.config();
@@ -19,6 +20,7 @@ const READ_ONLY = process.env.READ_ONLY || true; // We don't want to expose muta
 const BASIC_AUTH_USERNAME = process.env.BASIC_AUTH_USERNAME;
 const BASIC_AUTH_PASSWORD = process.env.BASIC_AUTH_PASSWORD;
 const HTTPS_REDIRECT = process.env.HTTPS_REDIRECT || false;
+const ALLOW_INTROSPECTION = process.env.ALLOW_INTROSPECTION || false;
 
 const driver = neo4j.driver(
   NEO4J_URI,
@@ -58,11 +60,12 @@ const main = async () => {
   // Create Apollo Server instance
   const server = new ApolloServer({
     schema: await neoSchema.getSchema(),
-	introspection: true
+    introspection: ALLOW_INTROSPECTION
   });
 
   // Start the server with Express middleware
   await server.start();
+  app.use(cors());
   app.use(express.json());
   app.use('/graphql', expressMiddleware(server));
 
