@@ -1,7 +1,8 @@
 import { ApolloServer } from '@apollo/server';
-import { startStandaloneServer } from '@apollo/server/standalone';
-import { Neo4jGraphQL } from "@neo4j/graphql";
-import neo4j from "neo4j-driver";
+import { expressMiddleware } from '@apollo/server/express4';
+import express from 'express';
+import { Neo4jGraphQL } from '@neo4j/graphql';
+import neo4j from 'neo4j-driver';
 import dotenv from 'dotenv';
 
 // Load environment variables (ensure to configure your environment variables properly)
@@ -50,19 +51,33 @@ type Request {
 }
 `;
 
-const driver = neo4j.driver(
+const main = async () => {
+  const driver = neo4j.driver(
     NEO4J_URI,
     neo4j.auth.basic(NEO4J_USERNAME, NEO4J_PASSWORD)
-);
+  );
+  const session = driver.session({ defaultAccessMode: neo4j.session.WRITE });
+  const neoSchema = new Neo4jGraphQL({ typeDefs, driver });
+  const app = express();
 
-const neoSchema = new Neo4jGraphQL({ typeDefs, driver });
-
-const server = new ApolloServer({
+  // Create Apollo Server instance
+  const server = new ApolloServer({
     schema: await neoSchema.getSchema(),
-});
+	introspection: true
+  });
 
-const { url } = await startStandaloneServer(server, {
-    listen: { port: PORT },
-});
+  // Start the server with Express middleware
+  await server.start();
+  app.use(express.json());
+  app.use('/graphql', expressMiddleware(server));
 
-console.log(`🚀 Server ready at ${url}`);
+  // Start the Express server on the provided port
+  app.listen(PORT, () => {
+    console.log(`🚀 Server ready at http://localhost:${PORT}/graphql`);
+  });
+}
+
+// Start the Apollo server
+main().catch(err => {
+  console.error('Failed to start server', err);
+});

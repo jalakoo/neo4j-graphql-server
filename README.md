@@ -4,7 +4,7 @@ Simple GraphQL server for automatic schema generation and querying from a Neo4j 
 
 ## Try it out
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fjalakoo%2Fneo4j-graphql-server%2F&env=NEO4J_URI,NEO4J_USERNAME,NEO4J_PASSWORD)
+[![Run on Google Cloud](https://deploy.cloud.run/button.svg)](https://deploy.cloud.run)
 
 ## Requirements
 
