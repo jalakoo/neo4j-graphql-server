@@ -7,6 +7,7 @@ import neo4j from 'neo4j-driver';
 import dotenv from 'dotenv';
 import basicAuth from 'express-basic-auth';
 import cors from "cors";
+import { manualTypeDefs } from './typedefs.js';
 
 // Load environment variables (for local development)
 dotenv.config();
@@ -15,12 +16,15 @@ dotenv.config();
 const NEO4J_URI = process.env.NEO4J_URI;
 const NEO4J_USERNAME = process.env.NEO4J_USERNAME;
 const NEO4J_PASSWORD = process.env.NEO4J_PASSWORD;
-const PORT = process.env.PORT || 8080; // Google Cloud Run dynamically assigns the port
-const READ_ONLY = process.env.READ_ONLY || true; // We don't want to expose mutations in this case
+
 const BASIC_AUTH_USERNAME = process.env.BASIC_AUTH_USERNAME;
 const BASIC_AUTH_PASSWORD = process.env.BASIC_AUTH_PASSWORD;
 const HTTPS_REDIRECT = process.env.HTTPS_REDIRECT || false;
 const ALLOW_INTROSPECTION = process.env.ALLOW_INTROSPECTION || false;
+const AUTO_TYPEDEFS = process.env.AUTO_TYPEDEFS || false;
+const PORT = process.env.PORT || 8080;
+const READ_ONLY = process.env.READ_ONLY || true;
+
 
 const driver = neo4j.driver(
   NEO4J_URI,
@@ -35,7 +39,7 @@ const sessionFactory = () => {
 	}
 }
 const main = async () => {
-  const typeDefs = await toGraphQLTypeDefs(sessionFactory);
+  const typeDefs = AUTO_TYPEDEFS === 'false' ? manualTypeDefs : await toGraphQLTypeDefs(sessionFactory);
   const neoSchema = new Neo4jGraphQL({ typeDefs, driver });
   const app = express();
 
