@@ -21,3 +21,8 @@ NEO4J_USERNAME=neo4j
 npm install
 node index.js
 ```
+
+## Alternate Examples in the following branches:
+
+- `auto` : Database introspection replaces need for manual type defs. Requires the source Neo4j database to be populated with data.
+- `advanced` : ENV flag configured version for defining manual/auto type defs, basic-auth, read/write mode, etc.
