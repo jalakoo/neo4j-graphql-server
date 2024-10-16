@@ -1,13 +1,13 @@
 import { ApolloServer } from '@apollo/server';
 import { expressMiddleware } from '@apollo/server/express4';
-import express from 'express';
 import { Neo4jGraphQL } from '@neo4j/graphql';
 import { toGraphQLTypeDefs } from "@neo4j/introspector";
+import { manualTypeDefs } from './typedefs.js';
+import express from 'express';
 import neo4j from 'neo4j-driver';
 import dotenv from 'dotenv';
 import basicAuth from 'express-basic-auth';
 import cors from "cors";
-import { manualTypeDefs } from './typedefs.js';
 
 // Load environment variables (for local development)
 dotenv.config();
@@ -17,6 +17,7 @@ const NEO4J_URI = process.env.NEO4J_URI;
 const NEO4J_USERNAME = process.env.NEO4J_USERNAME;
 const NEO4J_PASSWORD = process.env.NEO4J_PASSWORD;
 
+// Optional environment variables
 const BASIC_AUTH_USERNAME = process.env.BASIC_AUTH_USERNAME;
 const BASIC_AUTH_PASSWORD = process.env.BASIC_AUTH_PASSWORD;
 const HTTPS_REDIRECT = process.env.HTTPS_REDIRECT || false;
@@ -25,12 +26,13 @@ const AUTO_TYPEDEFS = process.env.AUTO_TYPEDEFS || false;
 const PORT = process.env.PORT || 8080;
 const READ_ONLY = process.env.READ_ONLY || true;
 
-
+// Start the Neo4j driver
 const driver = neo4j.driver(
   NEO4J_URI,
   neo4j.auth.basic(NEO4J_USERNAME, NEO4J_PASSWORD)
 );
 
+// Return a read or write session based on the READ_ONLY environment variable
 const sessionFactory = () => {
 	if (READ_ONLY === true) {
 		return driver.session({ defaultAccessMode: neo4j.session.READ });
@@ -39,11 +41,13 @@ const sessionFactory = () => {
 	}
 }
 const main = async () => {
+
+  // Load or Generate the GraphQL type definitions from an active database
   const typeDefs = AUTO_TYPEDEFS === 'false' ? manualTypeDefs : await toGraphQLTypeDefs(sessionFactory);
   const neoSchema = new Neo4jGraphQL({ typeDefs, driver });
   const app = express();
 
-  // Require basic auth if variables are present
+  // Optionally require basic auth if variables are present
   if (BASIC_AUTH_USERNAME && BASIC_AUTH_PASSWORD) {
     app.use(basicAuth({
       users: { [BASIC_AUTH_USERNAME]: BASIC_AUTH_PASSWORD },
@@ -51,7 +55,7 @@ const main = async () => {
     }));
   }
 
-  // Ensure the connection is via https
+  // Optionally ensure the connection is via https
   if (HTTPS_REDIRECT === true) {
     app.use((req, res, next) => {
       if (req.headers['x-forwarded-proto'] !== 'https') {
