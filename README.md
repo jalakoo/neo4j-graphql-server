@@ -4,7 +4,7 @@ Simple GraphQL server for automatic schema generation and querying from a Neo4j 
 
 ## Try it out
 
-[![Run on Google Cloud](https://deploy.cloud.run/button.svg)](https://deploy.cloud.run)
+[![Run on Google Cloud](https://deploy.cloud.run/button.svg)](https://deploy.cloud.run?target=_blank)
 
 ## Requirements
 
